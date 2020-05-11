@@ -1,0 +1,66 @@
+<script type="text/x-red" data-template-name="defaro-server">
+    <link rel="stylesheet" href="defaro/static/css/common.css" type="text/css" />
+
+    <div class="form-row">
+        <label for="node-config-input-name" class="l-width"><i class="icon-bookmark"></i>Name</span></label>
+        <input type="text" id="node-config-input-name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-ip" class="l-width"><i class="icon-globe"></i>IP</span></label>
+        <input type="text" id="node-config-input-ip">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port" class="l-width"><i class="icon-tag"></i> <span data-i18n="label.port"></span></label>
+        <input type="text" id="node-config-input-port">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-login" class="l-width"><i class="icon-lock"></i> User </span></label>
+        <input type="text" id="node-config-input-login">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-pass" class="l-width"><i class="icon-lock"></i> Password</span></label>
+        <input type="password" id="node-config-input-pass">
+    </div>
+    <!-- <div class="form-row">
+        <label for="node-config-input-secure" class="l-width"><i class="icon-tag"></i> SSL</label>
+        <input type="checkbox" id="node-config-input-secure" style="display: inline-block; width: auto; vertical-align: top;"> <span data-i18n="label.use_secured_ssl"></span></input>
+    </div> -->
+	<div class="form-tips" data-i18n="[html]tip.deploy"></div>
+</script>
+
+<script type='text/javascript'>
+    RED.nodes.registerType('defaro-server', {
+        category: 'config',
+        defaults: {
+            name: {
+                value: null,
+                required: false
+            },
+            ip: {
+                value: '127.0.0.1',
+                required: true
+            },
+            port: {
+                value: '1660',
+                required: true,
+                validate:RED.validators.number()
+            },
+            login: {
+                value: null,
+                required: true
+            },
+            pass: {
+                value: null,
+                required: true
+            }
+            // secure: {
+            //     value: false,
+            //     required: true
+            // }
+        },
+        label: function() {
+            return this.name ||  this.ip+':'+this.port;
+        }
+    });
+</script>
+

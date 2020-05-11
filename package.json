@@ -1,0 +1,34 @@
+{
+  "author": {
+    "name": "Bohdan Korda",
+    "email": "b.korda@hotmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/bkorda/node-red-contrib-defaro/issues/"
+  },
+  "dependencies": {
+    "multiple-select": "^1.4.1",
+    "request": "latest"
+  },
+  "description": "Defaro connectivity nodes for node-red",
+  "homepage": "https://github.com/bkorda/node-red-contrib-defaro",
+  "keywords": [
+    "defaro",
+    "node-red"
+  ],
+  "license": "GPL-3.0",
+  "name": "node-red-contrib-defaro",
+  "node-red": {
+    "nodes": {
+      "in": "nodes/in.js",
+      "out": "nodes/out.js",
+      "server": "nodes/server.js",
+      "api": "api.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bkorda/node-red-contrib-defaro.git"
+  },
+  "version": "0.0.1"
+}
