@@ -122,9 +122,109 @@ function defaro_truncateWithEllipses(text, max = 30) {
     }
 }
 
+function defaro_getStateList(nodeItem, selectedItemElementName, options = {}) {
+    options = $.extend({
+        filterType:'',
+        disableReadonly:false,
+        refresh:false
+    }, options);
+
+    function defaro_updateStateList(controller, selectedItemElement, itemName) {
+        // Remove all previous and/or static (if any) elements from 'select' input element
+        selectedItemElement.children().remove();
+
+        var uniqueId = $('#node-input-device').val();
+        if (controller && uniqueId) {
+            $.getJSON('defaro/getStatesForDevice', {
+                controllerID: controller.id,
+                device_id:uniqueId
+            })
+            .done(function (data, textStatus, jqXHR) {
+                try {
+                    selectedItemElement.html('<option value="0">'+ RED._("node-red-contrib-defaro/in:multiselect.complete_payload")+'</option>');
+
+                    var groupHtml = '';
+
+                    if (data && data.length) {
+                        groupHtml = $('<optgroup/>', {label: RED._("node-red-contrib-defaro/in:multiselect.defaro")});
+                        groupHtml.appendTo(selectedItemElement);
+
+                        $.each(data, function (index, value) {
+                            // var text = value;
+                            // if (typeof (value) != 'object') text += ' (' + value + ')';
+                            $('<option  value="' + value + '">' + value + '</option>').appendTo(groupHtml);
+                        });
+                    }
 
 
-function defaro_getItemStateList(nodeItem, selectedItemElementName, options = {}) {
+                    // //homekit formats
+                    // if (data[1] && Object.keys(data[1]).length) {
+                    //     // if (options.groups && groupsByName) {
+                    //     groupHtml = $('<optgroup/>', {label: RED._("node-red-contrib-defaro/in:multiselect.homekit")});
+                    //     groupHtml.appendTo(selectedItemElement);
+
+                    //     $.each(data[1], function (index, value) {
+                    //         $('<option  value="homekit_' + index + '">' + index + '</option>').appendTo(groupHtml);
+                    //     });
+                    // }
+
+
+                    // Enable item selection
+                    selectedItemElement.multipleSelect('enable');
+
+                    // console.log('=======>');console.log(itemName);
+                    // Finally, set the value of the input select to the selected value
+                    if (selectedItemElement.find('option[value='+itemName+']').length) {
+                        selectedItemElement.val(itemName);
+                    } else {
+                        selectedItemElement.val(selectedItemElement.find('option').eq(0).attr('value'));
+                    }
+
+                    selectedItemElement.multipleSelect('destroy');
+
+                    // Trim selected item string length with elipsis
+                    var selectItemSpanElement = $(`span.multiselect-selected-text:contains("${itemName}")`);
+                    var sHTML = selectItemSpanElement.html();
+                    selectItemSpanElement.html(defaro_truncateWithEllipses(sHTML, 35));
+
+                } catch (error) {
+                    console.error('Error #4534');
+                    console.log(error);
+                }
+            })
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                // Disable item selection if no items were retrieved
+                selectedItemElement.multipleSelect('disable');
+                selectedItemElement.multipleSelect('refresh');
+                //console.error(`Error: ${errorThrown}`);
+            });
+        }
+    }
+
+    var deServerElement = $('#node-input-server');
+    var selectedItemElement = $(selectedItemElementName);
+
+
+    // Initialize bootstrap multiselect form
+    selectedItemElement.multipleSelect('destroy');
+    selectedItemElement.multipleSelect({
+        numberDisplayed: 1,
+        dropWidth: 320,
+        width: 320,
+        single: !(typeof $(this).attr('multiple') !== typeof undefined && $(this).attr('multiple') !== false)
+    });
+
+
+    // Initial call to populate item list
+    defaro_updateStateList(RED.nodes.node(deServerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem);
+
+    // onChange event handler in case a new controller gets selected
+    deServerElement.change(function (event) {
+        defaro_updateStateList(RED.nodes.node(deServerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem);
+    });
+}
+
+function defaro_getItemActionList(nodeItem, selectedItemElementName, options = {}) {
 
     options = $.extend({
         filterType:'',
@@ -132,13 +232,13 @@ function defaro_getItemStateList(nodeItem, selectedItemElementName, options = {}
         refresh:false
     }, options);
 
-    function defaro_updateItemStateList(controller, selectedItemElement, itemName) {
+    function defaro_updateItemActionList(controller, selectedItemElement, itemName) {
         // Remove all previous and/or static (if any) elements from 'select' input element
         selectedItemElement.children().remove();
 
-        var uniqueId = $('#node-input-device_id').val();
+        var uniqueId = $('#node-input-device').val();
         if (controller && uniqueId) {
-            $.getJSON('defaro/getLastStateById', {
+            $.getJSON('defaro/getActionsForDevice', {
                 controllerID: controller.id,
                 device_id:uniqueId
             })
@@ -148,28 +248,29 @@ function defaro_getItemStateList(nodeItem, selectedItemElementName, options = {}
 
                         var groupHtml = '';
 
-                        if (data[0] && Object.keys(data[0]).length) {
+                        if (data && data.length) {
                             groupHtml = $('<optgroup/>', {label: RED._("node-red-contrib-defaro/in:multiselect.defaro")});
                             groupHtml.appendTo(selectedItemElement);
 
-                            $.each(data[0], function (index, value) {
-                                var text = index;
+                            $.each(data, function (index, value) {
+                                var text = value.name;
                                 if (typeof (value) != 'object') text += ' (' + value + ')';
-                                $('<option  value="' + index + '">' + text + '</option>').appendTo(groupHtml);
+
+                                $('<option  value="' + value.name + '">' + text + '</option>').appendTo(groupHtml);
                             });
                         }
 
 
-                        //homekit formats
-                        if (data[1] && Object.keys(data[1]).length) {
-                            // if (options.groups && groupsByName) {
-                            groupHtml = $('<optgroup/>', {label: RED._("node-red-contrib-defaro/in:multiselect.homekit")});
-                            groupHtml.appendTo(selectedItemElement);
+                        // //homekit formats
+                        // if (data[1] && Object.keys(data[1]).length) {
+                        //     // if (options.groups && groupsByName) {
+                        //     groupHtml = $('<optgroup/>', {label: RED._("node-red-contrib-defaro/in:multiselect.homekit")});
+                        //     groupHtml.appendTo(selectedItemElement);
 
-                            $.each(data[1], function (index, value) {
-                                $('<option  value="homekit_' + index + '">' + index + '</option>').appendTo(groupHtml);
-                            });
-                        }
+                        //     $.each(data[1], function (index, value) {
+                        //         $('<option  value="homekit_' + index + '">' + index + '</option>').appendTo(groupHtml);
+                        //     });
+                        // }
 
 
                         // Enable item selection
@@ -215,8 +316,6 @@ function defaro_getItemStateList(nodeItem, selectedItemElementName, options = {}
     var selectedItemElement = $(selectedItemElementName);
 
 
-
-
     // Initialize bootstrap multiselect form
     selectedItemElement.multipleSelect('destroy');
     selectedItemElement.multipleSelect({
@@ -228,10 +327,10 @@ function defaro_getItemStateList(nodeItem, selectedItemElementName, options = {}
 
 
     // Initial call to populate item list
-    defaro_updateItemStateList(RED.nodes.node(deServerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem);
+    defaro_updateItemActionList(RED.nodes.node(deServerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem);
 
     // onChange event handler in case a new controller gets selected
     deServerElement.change(function (event) {
-        defaro_updateItemStateList(RED.nodes.node(deServerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem);
+        defaro_updateItemActionList(RED.nodes.node(deServerElement.val()), selectedItemElement, selectedItemElement.val() || nodeItem);
     });
 }

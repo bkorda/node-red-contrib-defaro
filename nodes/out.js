@@ -1,7 +1,7 @@
 var request = require('request');
 
 module.exports = function(RED) {
-    class DefaroroOut {
+    class DefaroOut {
         constructor(config) {
             RED.nodes.createNode(this, config);
 

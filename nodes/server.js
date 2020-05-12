@@ -52,25 +52,9 @@ module.exports = function(RED) {
             if (forceRefresh || node.items === undefined) {
                 node.discoverProcess = true;
                 var url = "http://" + node.ip + ":" + node.port + "/api/v2/devices";
-                const devicesRequest = {
-                    url: url, 
-                    headers: {
-                        // 'Authorization': 'Basic ' + userdata,
-                        'Content-Type': 'application/json'
-                    }
-                  };
                   
-                request.get(devicesRequest, (error, result, data) => {
-                    
+                request.get(url, {json : true }, (error, result, data) => {
                     if (error) {
-                        node.discoverProcess = false;
-                        callback(false);
-                        return;
-                    }
-
-                    try {
-                        var dataParsed = JSON.parse(data);
-                    } catch (e) {
                         node.discoverProcess = false;
                         callback(false);
                         return;
@@ -79,9 +63,9 @@ module.exports = function(RED) {
                     node.oldItemsList = node.items !== undefined ? node.items : undefined;
                     node.items = {};
 
-                    if (dataParsed) {
-                        for (var index in dataParsed.devices) {
-                            var device = dataParsed.devices[index];
+                    if (data) {
+                        for (var index in data.devices) {
+                            var device = data.devices[index];
                             // prop.device_id = parseInt(index);
                             var key = device.id.toString();
                             node.items[key] = device;
@@ -101,6 +85,24 @@ module.exports = function(RED) {
                 callback(node.items);
                 return node.items;
             }
+        }
+
+        getActionsForDeviceId(deviceId, callback) {
+            var node = this;
+            var url = "http://" + node.ip + ":" + node.port + "/api/v2/devices/" + deviceId + "/actions";
+            
+            request.get(url, {json : true }, (error, result, data) => {
+                if (error) {
+                    callback(false);
+                    return;
+                }
+                if (data.success === true) {
+                    callback(data.actions);
+                    return data.actions;
+                }
+                callback(false);
+                return;
+            }).auth(node.login, node.pass);;
         }
 
         getDiscoverProcess() {
