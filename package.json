@@ -21,7 +21,6 @@
   "node-red": {
     "nodes": {
       "in": "nodes/in.js",
-      "out": "nodes/out.js",
       "server": "nodes/server.js",
       "api": "api.js"
     }

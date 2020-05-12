@@ -1,6 +1,4 @@
-
-
-var request = require('request');
+// var request = require('request');
 var NODE_PATH = '/defaro/';
 
 module.exports = function (RED) {
