@@ -33,31 +33,18 @@ function defaro_getItemList(nodeItem, selectedItemElementName, options = {}) {
                         var groupHtml = '';
                         var names = {};
 
-                        var devices = data[0];
-                        var groups = data[1];
-
-                        //groups
-                        groupHtml = $('<optgroup/>', {label: RED._("node-red-contrib-defaro/in:multiselect.groups")});
-                        groupHtml.appendTo(selectedItemElement);
-                        $.each(groups, function(index, value) {
-                            names[value.ID] = value.friendly_name;
-                            var text = '';
-                            if ("devices" in value && typeof(value.devices) != 'undefined' && value.devices.length > 0) {
-                                text = ' ('+value.devices.length+')';
-                            }
-                            $('<option value="' + value.ID + '" data-friendly_name="'+value.friendly_name+'">' + value.friendly_name + text + '</option>').appendTo(groupHtml);
-                        });
+                        var devices = data;
 
                         //devices
                         groupHtml = $('<optgroup/>', {label: RED._("node-red-contrib-defaro/in:multiselect.devices")});
                         groupHtml.appendTo(selectedItemElement);
                         $.each(devices, function(index, value) {
-                            names[value.ieeeAddr] = value.friendly_name;
-                            var model = '';
-                            if ("modelID" in value && typeof(value.modelID) != undefined) {
-                                model = ' (' + value.modelID + ')';
+                            names[value.id] = value.name;
+                            var role = '';
+                            if ("role" in value && typeof(value.role) != undefined) {
+                                role = ' (' + value.role + ')';
                             }
-                            $('<option value="' + value.ieeeAddr + '" data-friendly_name="'+value.friendly_name+'">' + value.friendly_name + model + '</option>').appendTo(groupHtml);
+                            $('<option value="' + value.id + '" data-friendly_name="'+ value.name+'">' + value.name + role + '</option>').appendTo(groupHtml);
                         });
 
                         // Enable item selection

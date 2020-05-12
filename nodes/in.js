@@ -9,9 +9,8 @@ module.exports = function(RED) {
             // //get server node
             node.server = RED.nodes.getNode(node.config.server);
             if (node.server) {
-            
-
-                // node.sendLastState(); //tested for duplicate send with onSocketOpen
+                setTimeout(node.sendLastState, 15000, node);
+                node.sendLastState(node); //tested for duplicate send with onSocketOpen
             } else {
                 node.status({
                     fill: "red",
@@ -21,8 +20,8 @@ module.exports = function(RED) {
             }
         }
 
-        sendLastState() {
-            var node = this;
+        sendLastState(node) {
+            // var node = this;
             var uniqueid = node.config.device;
             if (typeof (uniqueid) == 'string' && uniqueid.length) {
                 var deviceMeta = node.server.getDevice(uniqueid);
@@ -31,13 +30,13 @@ module.exports = function(RED) {
                     node.meta = deviceMeta;
                     if (node.config.outputAtStartup) {
                         setTimeout(function () {
-                            node.sendMetrics(deviceMeta, true);
+                            // node.sendMetrics(deviceMeta, true);
                         }, 1500); //we need this timeout after restart of node-red  (homekit delays)
                     } else {
                         setTimeout(function () {
                             node.status({}); //clean
-                            node.updateState(deviceMeta);
-                            node.sendStateHomekitOnly(deviceMeta); //always send for homekit
+                            // node.updateState(deviceMeta);
+                            // node.sendStateHomekitOnly(deviceMeta); //always send for homekit
                         }, 1500); //update status with the same delay
                     }
                 } else {
@@ -56,17 +55,17 @@ module.exports = function(RED) {
             }
         }
 
-        updateState(message) {
+        updateState(device) {
             var node = this;
 
-            var device;
-            if ("message" in message) {
-                device = node.server.getDevice(message.source)
-            } else if ("metrics" in message) {
-                device = message;
-            }
+            // var device;
+            // if ("message" in message) {
+            //     device = node.server.getDevice(message.source)
+            // } else if ("metrics" in message) {
+            //     device = message;
+            // }
 
-            if (device === undefined || device.metrics.isFailed) {
+            if (device === undefined || !device.alive) {
                 node.status({
                     fill: "red",
                     shape: "dot",
@@ -81,11 +80,11 @@ module.exports = function(RED) {
             }
             
 
-            if (device !== undefined && device.metrics !== undefined) {
-                if (node.oldLevel === undefined && device.metrics.level) { node.oldLevel = device.metrics.level; }
-                if (node.prevUpdateTime === undefined && device.updateTime) { node.prevUpdateTime = device.updateTime; }
+            if (device !== undefined && device.params !== undefined) {
+                // if (node.oldLevel === undefined && device.metrics.level) { node.oldLevel = device.metrics.level; }
+                // if (node.prevUpdateTime === undefined && device.updateTime) { node.prevUpdateTime = device.updateTime; }
             } else {
-                if (node.oldLevel === undefined && device.message.l) { node.oldLevel = device.message.l; }
+                // if (node.oldLevel === undefined && device.message.l) { node.oldLevel = device.message.l; }
                 //if (node.prevUpdateTime === undefined && device.updateTime) { node.prevUpdateTime = device.updateTime; }
             }
 
@@ -99,17 +98,17 @@ module.exports = function(RED) {
                 return;
             }
             //filter output
-            if (!force && 'onchange' === node.config.output && device.metrics.level === node.oldState) return;
-            if (!force && 'onupdate' === node.config.output && device.updateTime === node.prevUpdateTime) return;
+            // if (!force && 'onchange' === node.config.output && device.metrics.level === node.oldState) return;
+            // if (!force && 'onupdate' === node.config.output && device.updateTime === node.prevUpdateTime) return;
 
             //outputs
             node.send([
                 {
-                    payload: (node.config.state in device.metrics) ? device.metrics.level : device.metrics,
+                    payload: device.params, //(node.config.state in device.metrics) ? device.params.Status : device.params,
                     payload_raw: device,
                     meta: node.server.getDevice(node.config.device)
                 },
-                node.formatHomeKit(device)
+                // node.formatHomeKit(device)
             ]);
 
             // node.oldState = device.message[node.config.state];

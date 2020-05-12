@@ -1,4 +1,4 @@
-var request = require('request');
+const request = require('request');
 
 module.exports = function(RED) {
     class ServerNode {
@@ -12,7 +12,7 @@ module.exports = function(RED) {
             node.discoverProcess = false;
             node.name = n.name;
             node.ip = n.ip;
-            node.port = 8083;
+            node.port = n.port;
             node.login = n.login;
             node.pass = n.pass;
             node.secure = n.secure || false;
@@ -22,12 +22,28 @@ module.exports = function(RED) {
             node.refreshDiscoverTimer = null;
             node.refreshDiscoverInterval = 15000;
 
-
             node.discoverDevices(function(){}, true);
 
             this.refreshDiscoverTimer = setInterval(function () {
                 node.discoverDevices(function(){}, true);
             }, node.refreshDiscoverInterval);
+
+            function subscribe(last) {
+                var url = "http://" + node.ip + ":" + node.port + "/api/v2/poll";
+                if (last) {
+                    url += "?last=" + last;
+                }
+                request(url, { json : true}, (error, response, body) => {
+                    if (response.statusCode == 200) {
+                        node.onEventMessage(body.events);
+                        subscribe(body.last);
+                    } else if (error) {
+                        subscribe(null);
+                    }
+                }).auth(node.login, node.pass);
+            }
+
+            subscribe(null);
         }
 
         discoverDevices(callback, forceRefresh = false) {
@@ -35,15 +51,11 @@ module.exports = function(RED) {
 
             if (forceRefresh || node.items === undefined) {
                 node.discoverProcess = true;
-
                 var url = "http://" + node.ip + ":" + node.port + "/api/v2/devices";
-                let userpass = node.login + ':' + node.pass;
-                let userdata = Buffer.from(userpass).toString('base64')
-  
                 const devicesRequest = {
                     url: url, 
                     headers: {
-                        'Authorization': 'Basic ' + userdata,
+                        // 'Authorization': 'Basic ' + userdata,
                         'Content-Type': 'application/json'
                     }
                   };
@@ -65,13 +77,14 @@ module.exports = function(RED) {
                     }
 
                     node.oldItemsList = node.items !== undefined ? node.items : undefined;
-                    node.items = [];
+                    node.items = {};
 
                     if (dataParsed) {
-                        for (var index in dataParsed.data.devices) {
-                            var device = dataParsed.data.devices[index];
+                        for (var index in dataParsed.devices) {
+                            var device = dataParsed.devices[index];
                             // prop.device_id = parseInt(index);
-                            node.items[device.id] = device;
+                            var key = device.id.toString();
+                            node.items[key] = device;
                             
                             if (node.oldItemsList !== undefined && device.id in node.oldItemsList) {} else {
                                 node.emit("onNewDevice", device.id);
@@ -90,86 +103,95 @@ module.exports = function(RED) {
             }
         }
 
-        // getDiscoverProcess() {
-        //     var node = this;
-        //     return node.discoverProcess;
-        // }
+        getDiscoverProcess() {
+            var node = this;
+            return node.discoverProcess;
+        }
 
-        // getDevice(uniqueid) {
-        //     var node = this;
-        //     var result = undefined;
+        getDevice(uniqueid) {
+            var node = this;
+            var result = undefined;
 
-        //     if (node.items !== undefined && node.items) {
-        //         for (var index in (node.items)) {
-        //             var item = (node.items)[index];
-        //             if (item.id === uniqueid) {
-        //                 result = item;
-        //                 break;
-        //             }
-        //         }
-        //     }
-        //     return result;
-        // }
+            if (node.items !== undefined && node.items) {
+                for (var index in (node.items)) {
+                    var item = (node.items)[index];
+                    if (item.id === parseInt(uniqueid)) {
+                        result = item;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
 
-        // getItemsList(callback, forceRefresh = false) {
-        //     var node = this;
-        //     node.discoverDevices(function(items){
-        //         node.items_list = [];
-        //         for (var index in items) {
-        //             var device = items[index];
+        getItemsList(callback, forceRefresh = false) {
+            var node = this;
+            node.discoverDevices(function(items){
+                node.items_list = [];
+                for (var index in items) {
+                    var device = items[index];
                     
-        //             node.items_list.push({
-        //                 device_name: device.name,
-        //                 uniqueid: device.id,
-        //                 meta: device
-        //             });
-        //         }
+                    node.items_list.push({
+                        device_name: device.name,
+                        uniqueid: device.id,
+                        meta: device
+                    });
+                }
 
-        //         callback(node.items_list);
-        //         return node.items_list;
-        //     }, forceRefresh);
-        // }
+                callback(node.items_list);
+                return node.items_list;
+            }, forceRefresh);
+        }
 
-        // onSocketMessage(dataParsed) {
-        //     var that = this;
-        //     that.emit('onSocketMessage', dataParsed);
+        onEventMessage(events) {
+            var node = this;
+            node.emit('onEventMessage', events);
 
-        //     for (var nodeId in this.devices) {
-        //         var itemID = this.devices[nodeId];
-        //         var node = RED.nodes.getNode(nodeId);
+            if (!events) {
+                return
+            }
 
-        //         if (dataParsed.source === itemID) {
-        //             if (node && "server" in node) {
-        //                 //update server items db
-        //                 var serverNode = RED.nodes.getNode(node.server.id);
-        //                 if ("items" in serverNode) { //} && dataParsed.id in serverNode.items) {
-        //                     // update state of device in server node
-        //                     for (var index in serverNode.items) {
-        //                         var device = serverNode.items[index];
-        //                         if (device.id === dataParsed.source) {
-        //                             device.metrics.level = dataParsed.message.l
-        //                             serverNode.items[index] = device;
-        //                             break
-        //                         }
-        //                     }
+            var eventsDevices = events.filter(event => "device_id" in event);
+
+            for (var nodeId in node.devices) {
+                var itemID = this.devices[nodeId];
+                var node = RED.nodes.getNode(nodeId);
+                var event = eventsDevices.find(event => event.device_id === parseInt(itemID));
+                if (event && event.type === "DeviceChanged") {
+                    if (node && "server" in node) {
+                        //update server items db
+                        var serverNode = RED.nodes.getNode(node.server.id);
+                        if ("items" in serverNode) { //} && dataParsed.id in serverNode.items) {
+                            // update state of device in server node
+                            for (var index in serverNode.items) {
+                                var device = serverNode.items[index];
+                                if (device.id === event.device_id) {
+                                    event.params.forEach((param) => { 
+                                        var metricName = param.name;
+                                        device.params[metricName] = param.new_value;
+                                    })
+                                    serverNode.items[index] = device;
+                                    break
+                                }
+                            }
                                 
-        //                     if (node.type === "zway-input") {
-        //                         // console.log(dataParsed);
-        //                         node.sendMetrics(dataParsed);
-        //                     }
-        //                 }
-        //             } else {
-        //                 console.log('ERROR: cant get '+nodeId+' node, removed from list');
-        //                 delete node.devices[nodeId];
+                            if (node.type === "defaro-input") {
+                                // console.log(dataParsed);
+                                node.sendMetrics(device);
+                            }
+                        }
+                    } else {
+                        console.log('ERROR: cant get '+nodeId+' node, removed from list');
+                        delete node.devices[nodeId];
 
-        //                 if ("server" in node) {
-        //                     var serverNode = RED.nodes.getNode(node.server.id);
-        //                     delete serverNode.items[dataParsed.uniqueid];
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+                        if ("server" in node) {
+                            var serverNode = RED.nodes.getNode(node.server.id);
+                            delete serverNode.items[dataParsed.uniqueid];
+                        }
+                    }
+                }
+            }
+        }
     }
 
     RED.nodes.registerType('defaro-server', ServerNode);

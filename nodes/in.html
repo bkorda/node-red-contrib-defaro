@@ -7,13 +7,17 @@
         <label for="node-input-name" class="l-width"><i class="icon-tag"></i> <span data-i18n="label.name"></span></label>
         <input type="text" id="node-input-name" data-i18n="[placeholder]placeholder.name">
     </div>
+    <div class="form-row" style="display:none;">
+        <label for="node-input-friendly_name" class="l-width"><i class="icon-tag"></i> <span data-i18n="label.friendly_name"></span></label>
+        <input type="text" id="node-input-friendly_name" data-i18n="[placeholder]placeholder.friendly_name">
+    </div>
     <div class="form-row">
         <label for="node-input-server" class="l-width"><i class="fa fa-globe"></i> <span data-i18n="label.server"></span></label>
         <input type="text" id="node-input-server">
     </div>
     <div class="form-row">
         <label for="node-input-device" class="l-width"><i class="fa fa-crosshairs"></i> <span data-i18n="label.device"></span></label>
-        <select id="node-input-device" class="s-width" data-i18n="[placeholder]multiselect.none_selected"></select>
+        <select id="node-input-device" class="s-width" data-single="true"></select>
     </div>
     <div class="form-row">
         <label for="force-refresh" class="l-width"><i class="fa fa-refresh"></i> <span data-i18n="label.refresh"></span></label>
@@ -43,8 +47,9 @@
                 value: null,
                 required: true
             },
-            device_name: {
-                value: null
+            friendly_name: {
+                value: "",
+                required : false
             },
             // state: {
             //     value: ""
@@ -67,8 +72,8 @@
             
             if (this.name) {
                 label = this.name;
-            } else if (typeof(this.device_name) == 'string' && this.device_name.length) {
-                label = this.device_name;
+            } else if (typeof(this.friendly_name) == 'string' && this.friendly_name.length) {
+                label = this.friendly_name;
             } else if (typeof(this.device) == 'string' && this.device.length) {
                 label = this.device;
             }
@@ -78,15 +83,24 @@
         oneditprepare: function () {
             var node = this;
 
+            var updateOutput = function () {
+                var selectedDevice = $("#node-input-device option:selected").val();
+            }
+
+            // $("#node-input-state").on("change", function() {
+            //     var state = $("#node-input-state option:selected").val();
+            // })
+
             setTimeout(function(){
                 var $deviceInput = $('#node-input-device');
-                defaro_getItemList(node.device, '#node-input-device', {allowEmpty:true});
+                defaro_getItemList(node.device, '#node-input-device', {allowEmpty:false});
                 $deviceInput.on("change", function(){
                     // zway_getItemStateList(0, '#node-input-state');
                     device = $('#node-input-device option:selected').val();
 
-                    if (!device.match(/^\d/)) { node.state = 0; }
+                    // if (!device.match(/^\d/)) { node.state = 0; }
                     // updateOutput();
+                    $("#node-input-friendly_name").val($('#node-input-device option:selected').attr('data-friendly_name'));
                 });
                 setTimeout(function () {
                     // zway_getItemStateList(node.state, '#node-input-state');
