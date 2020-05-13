@@ -22,7 +22,7 @@ button.active {
     background-color: #ddd;
 }
 .help_block {
-    display: none;
+    display: block;
 }
 .help-tips {
     font-style: italic;

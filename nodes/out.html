@@ -6,13 +6,17 @@
         <label for="node-input-name" class="l-width"><i class="icon-tag"></i> <span data-i18n="label.name"></span></label>
         <input type="text" id="node-input-name" data-i18n="[placeholder]placeholder.name">
     </div>
+    <div class="form-row" style="display:none;">
+        <label for="node-input-friendly_name" class="l-width"><i class="icon-tag"></i> <span data-i18n="label.friendly_name"></span></label>
+        <input type="text" id="node-input-friendly_name" data-i18n="[placeholder]placeholder.friendly_name">
+    </div>
     <div class="form-row">
         <label for="node-input-server" class="l-width"><i class="fa fa-globe"></i> <span data-i18n="label.server"></span></label>
         <input type="text" id="node-input-server">
     </div>
     <div class="form-row">
         <label for="node-input-device" class="l-width"><i class="fa fa-crosshairs"></i> <span data-i18n="label.device"></span></label>
-        <select id="node-input-device" class="s-width" data-i18n="[placeholder]multiselect.none_selected"></select>
+        <select id="node-input-device" class="s-width" data-single="true"></select>
     </div>
     <div class="form-row">
         <label for="force-refresh" class="l-width"><i class="fa fa-refresh"></i> <span data-i18n="label.refresh"></span></label>
@@ -28,6 +32,10 @@
         <input type="text" id="node-input-payload" style="width:70%">
         <input type="hidden" id="node-input-payloadType">
     </div>
+    <div class="form-tips help_block">
+        <strong><span>Important</span></strong><br>
+        <span>Deploy node for see commands and tips</span>
+    </div>
 </script>
 
 <script type='text/javascript'>
@@ -39,16 +47,17 @@
             name: {
                 value: ""
             },
+            friendly_name: {
+                value: "",
+                required: false
+            },
             server: {
                 type: "defaro-server",
                 required: true
             },
             device: {
-                value: "",
+                value: null,
                 required: true
-            },
-            device_name: {
-                value: null
             },
             command: {
                 value: 'on',
@@ -61,7 +70,7 @@
             },
             payloadType: {
                 value: 'msg',
-            },
+            }
             // transitionTime: {
             //     value: null
             // }
@@ -71,12 +80,13 @@
         inputs: 1,
         outputs: 0,
         icon: "defaro2.png",
+        commands: {},
         label: function() {
             var label = 'defaro-out';
             if (this.name) {
                 label = this.name;
-            } else if (typeof(this.device_name) == 'string' && this.device_name.length) {
-                label = this.device_name;
+            } else if (typeof(this.friendly_name) == 'string' && this.friendly_name.length) {
+                label = this.friendly_name;
             } else if (typeof(this.device) == 'string' && this.device.length) {
                 label = this.device;
             }
@@ -86,68 +96,181 @@
         oneditprepare: function() {
             var node = this;
 
-            var topicTypes = {
-                value: 'defaro_cmd',
-                label: 'defaro',
-                icon: 'icons/node-red-contrib-defaro/defaro-orig.png',
-                options: [
-                    {'value':'on', 'label':'Switch (true/false)'},
-                    {'value':'open', 'label':'Lock (true/false)'},
-                    {'value':'toggle', 'label':'Toggle'},
-                    {'value':'blinds', 'label':'Blinds(0...255)'},
-                    {'value':'brightness', 'label':'Brightness(0...255)'},
-                    {'value':'rgb', 'label':'RGB(rrr,ggg,bbb)'},
-					{'value':'thermostat', 'label':'Temperature (Degrees)'}
-                ]
-            };
+            var $commandInput = $('#node-input-command');
+            var $commandTypeInput = $('#node-input-commandType');
+            var $payloadInput = $('#node-input-payload');
+            var $payloadTypeInput = $('#node-input-payloadType');
 
-            $('#node-input-command').typedInput({
-                types: [topicTypes, {value:'homekit',label:'homekit',icon: 'icons/node-red-contrib-defaro/homekit-logo.png',options:['homekit']}, 'str', 'msg'],
-                default: 'msg',
-                value: 'topic',
-                typeField: $('#node-input-commandType'),
-            });
-
-            $('#node-input-command').on('change', function(type, value) {
-                var val = $(this).val();
-                if ('toggle' === val) {
-                    $('#node-input-payload').closest('.form-row').hide();
-                } else {
-                    $('#node-input-payload').closest('.form-row').show();
-                }
-            });
-
-            var payloadTypes = {
-                value: 'defaro_payload',
-                label: 'defaro',
-                icon: 'icons/node-red-contrib-defaro/defaro-orig.png',
-                options: [
-                    {'value':'on', 'label':'On (Switch)'},
-                    {'value':'off', 'label':'Off (Switch)'}
-                ]
-            };
-            $('#node-input-payload').typedInput({
-                types: [payloadTypes, 'msg', 'flow', 'global', 'str', 'num', 'date'],
-                default: 'msg',
-                value: 'payload',
-                typeField: $('#node-input-payloadType'),
-            });
-
-            $('#node-input-payloadType').val(node.payloadType);
-            $('#node-input-commandType').val(node.commandType);
-
-            setTimeout(function(){
+            setTimeout(function() {
                 var $deviceInput = $('#node-input-device');
 
-                defaro_getItemList(node.device, '#node-input-device', {allowEmpty:true});
+                defaro_getItemList(node.device, '#node-input-device', {allowEmpty:false});
 
                 $deviceInput.on('change', function(){
-                    // defaro_getItemStateList(0, '#node-input-state');
+                    var device = ($(this).val());
+                    actionForDeviceId(device);
+
+                    // var type = $commandInput.typedInput('type');
+                    // $commandInput.typedInput('defaro_cmd',[{'value':"tess", 'label' : "test"}])
                 });
+
                 setTimeout(function () {
-                    // defaro_getItemStateList(node.state, '#node-input-state');
+                    var device = $('#node-input-device').val()
+                    if (device) {
+                        actionForDeviceId(device)
+                    }
                 },100);
             }, 100); //we need small timeout, too fire change event for server select
+
+            function actionForDeviceId(deviceId) {
+                $.getJSON('defaro/getActionsForDevice', {
+                    nodeId: node.id,
+                    device_id: deviceId
+                }).done(function (data, textStatus, jqXHR) {
+                    try {
+                        node.commands = data;
+                        var commands = [];
+                        $.each(data, function (index, value) {
+                            console.log(value);
+                            var label = value.name;
+                            var args = value.arguments;
+                            if (args) {
+                                label += ' (';
+                                $.each(args, (index, value) => {
+                                    label += value.type + ','
+                                });
+                                //remove last coma
+                                label = label.substring(0, label.length - 1);
+                                label += ')';
+                            }
+                            commands.push({'value':value.name, 'label' : label})
+                        });
+
+                        var topicTypes = {
+                            value: 'defaro_cmd',
+                            label: 'defaro',
+                            icon: 'icons/node-red-contrib-defaro/defaro.png',
+                            options: commands
+                        };
+
+                        $commandInput.typedInput({
+                            types: [topicTypes, {value:'object', label:'object', options:['json']}, 'msg', 'str'],
+                            default: 'msg',
+                            value: 'topic',
+                            typeField: $commandTypeInput,
+                        });
+
+                        var payloadTypes = {
+                            value: 'defaro_payload',
+                            label: 'defaro',
+                            icon: 'icons/node-red-contrib-defaro/defaro.png',
+                            options: []
+                        };
+
+                        $payloadInput.typedInput({
+                            types: ['msg', 'flow', 'global'],
+                            default: 'msg',
+                            value: 'payload',
+                            typeField: $payloadTypeInput,
+                        });
+
+                        $payloadTypeInput.val(node.payloadType);
+
+                        $commandInput.typedInput('value', node.command);
+
+                        $commandInput.on('change', function(type, value) {
+                            // onChange(value);
+                            var value = $commandInput.typedInput('value');
+                            onChange(value);
+                        });
+
+                        $payloadInput.on('change', function(type, value) {
+                            var value = $commandInput.typedInput('value');
+                            onChange(value);
+                        });
+
+                        $commandInput.typedInput('types', [topicTypes, {value:'object', label:'object', options:['json']}, 'msg']);
+                        // $commandInput.trigger('change');
+
+                        function onChange(commandName) {
+                            var $commandInput = $('#node-input-command');
+                            var selectedCommand = $commandInput.val();
+                            var $commandTypeInput = $('#node-input-commandType');
+                            var $payloadInput = $('#node-input-payload');
+                            var $payloadRow = $payloadInput.closest('.form-row');
+                            var $payloadTypeInput = $('#node-input-payloadType');
+                            var $helpBlock = $('.help_block');
+
+                            var command = node.commands.find(function (element, index, array) { return element.name === commandName });
+                            
+                            if (!command) {
+                                $helpBlock.hide();
+                                return;
+                            }
+
+                            $helpBlock.children().remove();
+                            $('<strong />').append($('<span />').html("Command: " + command.name)).appendTo($helpBlock);
+                            // $helpBlock.append($strong);
+                            $helpBlock.append($('<br/>'));
+                            $helpBlock.append($('<span />').html(command.description));
+                            $helpBlock.append($('<br/>'));
+
+                            var args = command.arguments;
+                            var argsJson = {};
+                            if (args && args.length) {
+                                $('<strong />').append($('<span />').html("Arguments:")).appendTo($helpBlock);
+                                $helpBlock.append($('<br/>'));
+                                $.each(args, (index, element) => {
+                                    switch (element.type) {
+                                        case 'integer':
+                                            argsJson[element.name] = 10;
+                                        break;
+
+                                        case 'boolean':
+                                            argsJson[element.name] = true;
+                                        break;
+
+                                        case 'string':
+                                            argsJson[element.name] = "up";
+                                        break;
+
+                                        case 'json':
+                                            argsJson[element.name] = "your JSON";
+                                        break;
+
+                                        default:
+                                        break;
+                                    }
+                                    
+                                    $helpBlock.append($('<span />').html("Name: " + element.name));
+                                    $helpBlock.append($('<br/>'));
+                                    $helpBlock.append($('<span />').html("Type: " + element.type));
+                                    $helpBlock.append($('<br/>'));
+                                    $helpBlock.append($('<span />').html("Description: " + element.description));
+                                    $helpBlock.append($('<br/>'));
+                                    $helpBlock.append($('<br/>'));
+                                });
+                            }
+                            $('<strong />').append($('<span />').html("Example JSON command:")).appendTo($helpBlock);
+                            $helpBlock.append($('<br/>'));
+                            var example = {
+                                method : command.name,
+                                params : "JSON with keys from arguments description"
+                            }
+                            $helpBlock.append($('<span />').html(JSON.stringify(example, null, '\t')));
+                            $helpBlock.show();
+                        }
+
+                    } finally {
+
+                    }
+                });
+            }
+
+            $('#node-input-device').on('change', function(type, value) {
+                $('#node-input-command').trigger('change');
+                $('#node-input-friendly_name').val($('#node-input-device option:selected').attr('data-friendly_name'));
+            });
         },
 
         oneditsave: function () {
