@@ -80,7 +80,7 @@ module.exports = function(RED) {
             }
 
             if (device !== undefined && device.params !== undefined) {
-                if (node.oldLevel === undefined && device.params[node.config.state]) { node.oldLevel = device.params[node.config.state]; }
+                if (node.oldState === undefined && device.params[node.config.state]) { node.oldState = device.params[node.config.state]; }
                 // if (node.prevUpdateTime === undefined && device.updateTime) { node.prevUpdateTime = device.updateTime; }
             } else {
                 // if (node.oldLevel === undefined && device.message.l) { node.oldLevel = device.message.l; }
@@ -97,7 +97,7 @@ module.exports = function(RED) {
                 return;
             }
             //filter output
-            if (!force && 'onchange' === node.config.output && device.params[node.config.state] === node.oldState) return;
+            if (!force && 'onchange' === node.config.output && device.params[node.config.state] !== undefined && device.params[node.config.state] === node.oldState) return;
             // if (!force && 'onupdate' === node.config.output && device.updateTime === node.prevUpdateTime) return;
 
             //outputs

@@ -157,12 +157,12 @@ module.exports = function(RED) {
 
             for (var nodeId in node.devices) {
                 var itemID = this.devices[nodeId];
-                var node = RED.nodes.getNode(nodeId);
+                var nodeIn = RED.nodes.getNode(nodeId);
                 var event = eventsDevices.find(event => event.device_id === parseInt(itemID));
                 if (event && event.type === "DeviceChanged") {
-                    if (node && "server" in node) {
+                    if (nodeIn && "server" in nodeIn) {
                         //update server items db
-                        var serverNode = RED.nodes.getNode(node.server.id);
+                        var serverNode = RED.nodes.getNode(nodeIn.server.id);
                         if ("items" in serverNode) { //} && dataParsed.id in serverNode.items) {
                             // update state of device in server node
                             for (var index in serverNode.items) {
@@ -177,9 +177,9 @@ module.exports = function(RED) {
                                 }
                             }
                                 
-                            if (node.type === "defaro-input") {
+                            if (nodeIn.type === "defaro-input") {
                                 // console.log(dataParsed);
-                                node.sendMetrics(device);
+                                nodeIn.sendMetrics(device);
                             }
                         }
                     } else {
