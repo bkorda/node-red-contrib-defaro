@@ -21,15 +21,15 @@
   "name": "node-red-contrib-defaro",
   "node-red": {
     "nodes": {
-      "in" : "nodes/in.js",
-      "out" : "nodes/out.js",
-      "server" : "nodes/server.js",
-      "api" : "api.js"
+      "in": "nodes/in.js",
+      "out": "nodes/out.js",
+      "server": "nodes/server.js",
+      "api": "api.js"
     }
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bkorda/node-red-contrib-defaro.git"
   },
-  "version": "0.0.2"
+  "version": "0.0.3"
 }

@@ -38,7 +38,7 @@ module.exports = function(RED) {
                             finalCommand = payload;
                             break;
                         }
-
+                        
                         var command;
                         switch (node.commandType) {
                         case 'msg': 
@@ -81,6 +81,7 @@ module.exports = function(RED) {
                         break;
 
                         case 'object':
+                            command = "obj";
                             finalCommand = message.payload;
                         break;
                         default: 
