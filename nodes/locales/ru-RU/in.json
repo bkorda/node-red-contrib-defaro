@@ -20,7 +20,8 @@
         "thermostat_heating" : "Обогрев"
     },
     "placeholder": {
-        "name": "Название"
+        "name": "Название",
+        "complete_payload": "Все данные массивом"
     },
     "status": {
         "disconnected": "отключено",

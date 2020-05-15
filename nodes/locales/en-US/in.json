@@ -20,7 +20,8 @@
         "thermostat_heating" : "Heating"
     },
     "placeholder": {
-        "name": "Name"
+        "name": "Name",
+        "complete_payload": "Complete state payload"
     },
     "status": {
         "disconnected": "disconnected",

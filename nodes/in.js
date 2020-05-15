@@ -104,8 +104,8 @@ module.exports = function(RED) {
             node.send([
                 {
                     payload: (node.config.state in device.params) ? device.params[node.config.state] : device.params,
-                    payload_raw: device,
-                    meta: node.server.getDevice(node.config.device)
+                    payload_raw: device.params,
+                    meta: device
                 },
                 // node.formatHomeKit(device)
             ]);

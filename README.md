@@ -1,5 +1,5 @@
 # node-red-contrib-defaro
-Node-Red Nodes for Defaro controller connectivity.
+Node-Red Nodes for Defaro Domus controller connectivity.
 
 Available nodes are:
 <!-- * zway-in: A node to subscribe to Defaro devices

@@ -35,8 +35,6 @@ module.exports = function(RED) {
                 if (last) {
                     url += "?last=" + last;
                 }
-                
-                node.log('making request: ' + url);
 
                 request(url, { json : true}, (error, response, body) => {
                     if (response) {
