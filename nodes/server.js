@@ -29,10 +29,15 @@ module.exports = function(RED) {
             }, node.refreshDiscoverInterval);
 
             function subscribe(last) {
+                
                 var url = "http://" + node.ip + ":" + node.port + "/api/v2/poll";
+                
                 if (last) {
                     url += "?last=" + last;
                 }
+                
+                node.log('making request: ' + url);
+
                 request(url, { json : true}, (error, response, body) => {
                     if (response) {
                         if (response.statusCode == 200) {
@@ -40,6 +45,7 @@ module.exports = function(RED) {
                             subscribe(body.last);
                         } else if (response.statusCode == 500) {
                             node.error(response.body.serverError);
+                            subscribe(null);
                         }
                     } else if (error) {
                         node.error(error);

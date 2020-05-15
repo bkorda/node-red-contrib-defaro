@@ -30,5 +30,5 @@
     "type": "git",
     "url": "git+https://github.com/bkorda/node-red-contrib-defaro.git"
   },
-  "version": "0.0.1"
+  "version": "0.0.2"
 }
