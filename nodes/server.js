@@ -34,10 +34,15 @@ module.exports = function(RED) {
                     url += "?last=" + last;
                 }
                 request(url, { json : true}, (error, response, body) => {
-                    if (response.statusCode == 200) {
-                        node.onEventMessage(body.events);
-                        subscribe(body.last);
+                    if (response) {
+                        if (response.statusCode == 200) {
+                            node.onEventMessage(body.events);
+                            subscribe(body.last);
+                        } else if (response.statusCode == 500) {
+                            node.error(response.body.serverError);
+                        }
                     } else if (error) {
+                        node.error(error);
                         subscribe(null);
                     }
                 }).auth(node.login, node.pass);
