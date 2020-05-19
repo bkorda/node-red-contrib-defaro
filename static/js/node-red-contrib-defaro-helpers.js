@@ -11,7 +11,6 @@ function defaro_getItemList(nodeItem, selectedItemElementName, options = {}) {
         // Remove all previous and/or static (if any) elements from 'select' input element
         selectedItemElement.children().remove();
 
-
         if (controller) {
             selectedItemElement.multipleSelect('disable');
 

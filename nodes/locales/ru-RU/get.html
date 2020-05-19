@@ -1,0 +1,18 @@
+<script type="text/x-red" data-help-name="defaro-get">
+    <link rel="stylesheet" href="defaro/static/css/common.css" type="text/css" />
+    <p>Получить параметры выбранного устройства</p>
+
+    <h3>Входы</h3>
+    <dl class="message-properties">
+        <dt class="optional">Имя <span class="property-type">string</span></dt><dd>Указать свое название или оставить пустым.</dd>
+        <dt>Сервер <span class="property-type">object</span></dt><dd>Выберите Defaro Domus сервер.</dd>
+        <dt>устройство <span class="property-type">string</span></dt><dd>Устройство для получение статуса</dd>
+        <dt class="optional">State <span class="property-type">string</span></dt><dd>Нода статус соединения к Domus с помощью индикатора и влияет на Payload.</dd>
+    </dl>
+
+    <h3>Выход</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">Объект или строка</span></dt><dd>Данные по выбранному параметру </dd>
+        <dt>meta<span class="property-type">object</span></dt><dd>Полная информация по устройству</dd>
+    </dl>
+</script>

@@ -34,7 +34,7 @@
     </div>
     <div class="form-tips help_block">
         <strong><span>Important</span></strong><br>
-        <span>Deploy node for see commands and tips</span>
+        <span>Select device for see commands and tips</span>
     </div>
 </script>
 
@@ -103,12 +103,17 @@
 
             setTimeout(function() {
                 var $deviceInput = $('#node-input-device');
+                var $server = $('#node-input-server')
 
                 defaro_getItemList(node.device, '#node-input-device', {allowEmpty:false});
 
+
                 $deviceInput.on('change', function(){
                     var device = ($(this).val());
-                    actionForDeviceId(device);
+                    var server = $server.val()
+                    if (device && server) {
+                        actionForDeviceId(device, server);
+                    }
 
                     // var type = $commandInput.typedInput('type');
                     // $commandInput.typedInput('defaro_cmd',[{'value':"tess", 'label' : "test"}])
@@ -116,15 +121,16 @@
 
                 setTimeout(function () {
                     var device = $('#node-input-device').val()
-                    if (device) {
-                        actionForDeviceId(device)
+                    var server = $server.val()
+                    if (device && server) {
+                        actionForDeviceId(device, server)
                     }
                 },100);
             }, 100); //we need small timeout, too fire change event for server select
 
-            function actionForDeviceId(deviceId) {
+            function actionForDeviceId(deviceId, serverId) {
                 $.getJSON('defaro/getActionsForDevice', {
-                    nodeId: node.id,
+                    server_id: serverId,
                     device_id: deviceId
                 }).done(function (data, textStatus, jqXHR) {
                     try {

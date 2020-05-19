@@ -54,11 +54,11 @@ module.exports = function (RED) {
 
     RED.httpAdmin.get(NODE_PATH + 'getActionsForDevice', function(req, res) {
         var config = req.query;
-        var node = RED.nodes.getNode(config.nodeId);
-        if (!node || !('server' in node)) {
+        var controller = RED.nodes.getNode(config.server_id);
+        if (!controller) {
             return;
         }
-        var controller = node.server;
+
         if (controller && controller.constructor.name === "ServerNode") {
             controller.getActionsForDeviceId(config.device_id, function(actions) {
                 if (actions) {
