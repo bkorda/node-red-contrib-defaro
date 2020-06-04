@@ -17,10 +17,13 @@ module.exports = function(RED) {
             node.pass = n.pass;
             node.secure = n.secure || false;
             node.devices = {};
+            node.closed = false;
 
             node.setMaxListeners(255);
             node.refreshDiscoverTimer = null;
             node.refreshDiscoverInterval = 15000;
+
+            node.on('close', () => this.onClose());
 
             node.discoverDevices(function(){}, true);
 
@@ -29,6 +32,8 @@ module.exports = function(RED) {
             }, node.refreshDiscoverInterval);
 
             function subscribe(last) {
+
+                if (node.closed) { return }
                 
                 var url = "http://" + node.ip + ":" + node.port + "/api/v2/poll";
                 
@@ -202,6 +207,11 @@ module.exports = function(RED) {
                     }
                 }
             }
+        }
+
+        onClose() {
+            var that = this;
+            that.closed = true;
         }
     }
 
